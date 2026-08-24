@@ -10,7 +10,6 @@ const MENU: MenuRow[] = [
   { label: 'Categories', href: '/(tabs)/more/categories' },
   { label: 'Recurring Transactions', href: '/(tabs)/more/recurring' },
   { label: 'Installment Plans', href: '/(tabs)/more/installments' },
-  { label: 'Money Exchanges', href: '/(tabs)/more/exchanges' },
 ]
 
 export default function MoreScreen() {

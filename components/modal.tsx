@@ -1,4 +1,4 @@
-import { KeyboardAvoidingView, Modal as RNModal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, Modal as RNModal, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { useTheme } from '@/contexts/theme-context'
@@ -36,13 +36,17 @@ export function AppModal({ visible, title, onClose, children }: AppModalProps) {
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+  overlay: { 
+    flex: 1, 
+    justifyContent: 'flex-start', 
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+  },
   sheet: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     borderWidth: 1,
     borderBottomWidth: 0,
-    maxHeight: '90%',
+    maxHeight: '50%',
     padding: 24,
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },

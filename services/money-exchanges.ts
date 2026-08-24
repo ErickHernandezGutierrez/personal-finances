@@ -6,11 +6,27 @@ import { recalculateBalance } from './accounts'
 type ExchangeInsert = Omit<MoneyExchangeInsert, 'user_id' | 'fx_rate'>
 type ExchangeUpdate = Omit<MoneyExchangeUpdate, 'fx_rate'>
 
-export async function listMoneyExchanges(): Promise<MoneyExchange[]> {
-  const { data, error } = await supabase
+export type MoneyExchangeFilters = {
+  accountId?: string
+  from?: string // YYYY-MM-DD, filters on date_sent
+  to?: string   // YYYY-MM-DD, filters on date_sent
+}
+
+export async function listMoneyExchanges(filters?: MoneyExchangeFilters): Promise<MoneyExchange[]> {
+  let query = supabase
     .from('money_exchanges')
     .select('*')
     .order('date_sent', { ascending: false })
+
+  if (filters?.accountId) {
+    query = query.or(
+      `from_account_id.eq.${filters.accountId},to_account_id.eq.${filters.accountId}`,
+    )
+  }
+  if (filters?.from) query = query.gte('date_sent', filters.from)
+  if (filters?.to) query = query.lte('date_sent', filters.to)
+
+  const { data, error } = await query
   if (error) throw error
   return data
 }

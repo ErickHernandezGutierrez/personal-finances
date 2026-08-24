@@ -4,6 +4,7 @@ import { recalculateBalance } from './accounts'
 
 export type TransactionFilters = {
   accountId?: string
+  categoryId?: string
   type?: string
   isPaid?: boolean
   from?: string // YYYY-MM-DD
@@ -15,13 +16,13 @@ export async function listTransactions(filters?: TransactionFilters): Promise<Tr
     .from('transactions')
     .select('*')
     .order('date', { ascending: false })
-    .order('created_at', { ascending: false })
 
   if (filters?.accountId) {
     query = query.or(
       `account_id.eq.${filters.accountId},to_account_id.eq.${filters.accountId}`,
     )
   }
+  if (filters?.categoryId) query = query.eq('category_id', filters.categoryId)
   if (filters?.type) query = query.eq('type', filters.type)
   if (filters?.isPaid !== undefined) query = query.eq('is_paid', filters.isPaid)
   if (filters?.from) query = query.gte('date', filters.from)
