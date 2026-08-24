@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { Card } from '@/components/ui/card'
 import { IconSymbol } from '@/components/ui/icon-symbol'
 import { useTheme } from '@/contexts/theme-context'
+import { formatCurrency } from '@/lib/format'
 import type { Account, AccountType } from '@/types/app'
 
 const TYPE_LABELS: Record<AccountType, string> = {
@@ -11,14 +12,6 @@ const TYPE_LABELS: Record<AccountType, string> = {
   investment: 'Investment',
   cash: 'Cash',
   credit_card: 'Credit Card',
-}
-
-function formatCurrency(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount)
-  } catch {
-    return `${amount.toFixed(2)} ${currency}`
-  }
 }
 
 type AccountCardProps = {
@@ -50,7 +43,7 @@ export function AccountCard({ account, onPress, archived, onDeactivate, onReacti
             {typeLabel}
             {account.bank ? ` · ${account.bank}` : ''}
           </Text>
-          <Text style={[styles.balance, { color: theme.text }]}>
+          <Text style={[styles.balance, { color: account.current_balance < 0 ? '#ef4444' : '#22c55e' }]}>
             {formatCurrency(account.current_balance, account.currency)}
           </Text>
           {account.type === 'credit_card' && account.credit_limit != null && (

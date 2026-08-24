@@ -5,11 +5,14 @@ import type { Account, AccountInsert, AccountUpdate } from '@/types/app'
  * Recomputes current_balance for an account from its initial_balance
  * plus all paid transactions and applied money exchanges.
  * Called automatically after any mutation that affects a balance.
+ *
+ * Credit cards use the same signed-balance formula as every other account:
+ * negative = you owe that amount, positive = the card owes you (overpaid).
  */
 export async function recalculateBalance(accountId: string): Promise<void> {
   const { data: account } = await supabase
     .from('accounts')
-    .select('initial_balance, type')
+    .select('initial_balance')
     .eq('id', accountId)
     .single()
 
@@ -30,17 +33,13 @@ export async function recalculateBalance(accountId: string): Promise<void> {
   let balance = account.initial_balance
 
   for (const tx of txs ?? []) {
-    if (account.type === 'credit_card') {
-      // credit card balance = amount owed
-      if (tx.type === 'expense' && tx.account_id === accountId) balance += tx.amount
-      if (tx.type === 'credit_payment' && tx.to_account_id === accountId) balance -= tx.amount
-    } else {
-      if (tx.account_id === accountId) {
-        if (tx.type === 'income') balance += tx.amount
-        else balance -= tx.amount // expense, withdrawal, transfer, credit_payment, investment
-      }
-      if (tx.to_account_id === accountId) {
-        if (tx.type === 'transfer' || tx.type === 'investment') balance += tx.amount
+    if (tx.account_id === accountId) {
+      if (tx.type === 'income') balance += tx.amount
+      else balance -= tx.amount // expense, withdrawal, transfer, credit_payment, investment
+    }
+    if (tx.to_account_id === accountId) {
+      if (tx.type === 'transfer' || tx.type === 'investment' || tx.type === 'withdrawal' || tx.type === 'credit_payment') {
+        balance += tx.amount
       }
     }
   }
@@ -96,6 +95,12 @@ export async function updateAccount(id: string, data: AccountUpdate): Promise<Ac
     .select()
     .single()
   if (error) throw error
+
+  if (data.initial_balance !== undefined) {
+    await recalculateBalance(id)
+    return getAccount(id)
+  }
+
   return account
 }
 

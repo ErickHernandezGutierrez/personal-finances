@@ -117,6 +117,7 @@ export function AccountForm({ mode, account, submitting, error, onSubmit, onCanc
       type: state.type,
       currency: state.currency.trim(),
       color: state.color,
+      initial_balance: Number(state.initial_balance) || 0,
       bank: isCreditCard ? state.bank.trim() || null : null,
       credit_limit: isCreditCard && state.credit_limit ? Number(state.credit_limit) : null,
       billing_cycle_day: isCreditCard && state.billing_cycle_day ? Number(state.billing_cycle_day) : null,
@@ -124,10 +125,7 @@ export function AccountForm({ mode, account, submitting, error, onSubmit, onCanc
     }
 
     if (mode === 'create') {
-      onSubmit({
-        mode: 'create',
-        data: { ...shared, initial_balance: Number(state.initial_balance) || 0 },
-      })
+      onSubmit({ mode: 'create', data: shared })
     } else {
       onSubmit({ mode: 'edit', data: shared })
     }
@@ -168,11 +166,16 @@ export function AccountForm({ mode, account, submitting, error, onSubmit, onCanc
         onChangeText={(v) => update('initial_balance', v)}
         keyboardType="decimal-pad"
         error={errors.initial_balance}
-        editable={mode === 'create'}
       />
+      {isCreditCard && (
+        <Text style={{ color: theme.icon, fontSize: 12 }}>
+          Credit cards use a signed balance: enter existing debt as a negative number (e.g. -50000 if you
+          currently owe 50,000). Positive means the card owes you.
+        </Text>
+      )}
       {mode === 'edit' && (
         <Text style={{ color: theme.icon, fontSize: 12 }}>
-          Balance is recalculated automatically from transactions.
+          Changing this recalculates the current balance from transactions.
         </Text>
       )}
 
