@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,7 +13,16 @@ import type { Account } from '@/types/app';
 
 export default function AccountsScreen() {
   const { theme } = useTheme();
-  const { accounts, archivedAccounts, loading, error, create, update, deactivate, reactivate } = useAccounts();
+  const { accounts, archivedAccounts, loading, error, refetch, create, update, deactivate, reactivate } = useAccounts();
+
+  // current_balance is denormalized and recalculated server-side by services/accounts.ts
+  // whenever a transaction changes elsewhere (e.g. the Transactions tab). Refetch on focus
+  // so this screen picks up that value instead of re-deriving it from transactions itself.
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
