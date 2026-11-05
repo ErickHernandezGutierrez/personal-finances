@@ -1,55 +1,79 @@
-import { KeyboardAvoidingView, Platform, Pressable, Modal as RNModal, ScrollView, StyleSheet, Text, View } from 'react-native'
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
 
-import { IconSymbol } from '@/components/ui/icon-symbol'
-import { useTheme } from '@/contexts/theme-context'
+import { Backdrop } from '@/components/ui/backdrop';
+import { Button } from '@/components/ui/button';
+import { useTheme } from '@/contexts/theme-context';
+import Modal from 'react-native-modal';
 
 type AppModalProps = {
   visible: boolean
   title: string
   onClose: () => void
   children: React.ReactNode
-}
+};
 
 export function AppModal({ visible, title, onClose, children }: AppModalProps) {
-  const { theme } = useTheme()
+  const { theme } = useTheme();
 
   return (
-    <RNModal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={[styles.sheet, { backgroundColor: theme.background, borderColor: theme.border }]}>
-            <View style={styles.header}>
-              <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
-              <Pressable onPress={onClose} hitSlop={8}>
-                <IconSymbol name="xmark" size={22} color={theme.icon} />
-              </Pressable>
-            </View>
-            <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-              {children}
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
+    <Modal 
+      isVisible={visible} 
+      style={styles.modal}
+      customBackdrop={<Backdrop />}
+    >
+      <View style={[styles.content, { backgroundColor: theme.tertiaryBackground }]}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+          <Button 
+            variant='tertiary'
+            size='small'
+            title='Close'
+            onPress={onClose}
+            leadingIconName='xmark'
+          />
+        </View>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          keyboardShouldPersistTaps="handled"
+        >
+          {children}
+        </ScrollView>
       </View>
-    </RNModal>
+    </Modal>
   )
 }
 
 const styles = StyleSheet.create({
-  overlay: { 
-    flex: 1, 
-    justifyContent: 'flex-start', 
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+  modal: {
+    margin: 0,
+    justifyContent: 'flex-end',
   },
-  sheet: {
+  content: {
+    width: '100%',
+    alignSelf: 'flex-end',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    borderWidth: 1,
-    borderBottomWidth: 0,
-    maxHeight: '50%',
-    padding: 24,
+    maxHeight: '75%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    paddingLeft: 24,
+    paddingRight: 24,
+    paddingTop: 24,
+    alignItems: 'center', 
+    marginBottom: 8, 
+  },
   title: { fontSize: 20, fontWeight: 'bold' },
-  scrollContent: { paddingBottom: 24 },
-})
+  scrollContent: { padding: 24 },
+});
