@@ -1,10 +1,10 @@
 import { THEMES } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { type ThemeColor } from '@/types/theme';
+import { type ThemeColors } from '@/types/theme';
 import React, { createContext, useContext, useState } from 'react';
 
 type ThemeState = {
-    theme: ThemeColor;
+    theme: ThemeColors;
     toggleTheme: () => void;
 };
 
@@ -12,7 +12,7 @@ const ThemeContext = createContext<ThemeState | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const colorScheme = useColorScheme() ?? 'light';
-    const [theme, setTheme] = useState<ThemeColor>(THEMES['dark']);
+    const [theme, setTheme] = useState<ThemeColors>(THEMES['dark']);
 
     const toggleTheme = () => {
         setTheme(prevTheme => prevTheme.name === 'light'
