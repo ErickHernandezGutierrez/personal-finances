@@ -13,7 +13,17 @@ import type { Account } from '@/types/app';
 
 export default function AccountsScreen() {
   const { theme } = useTheme();
-  const { accounts, archivedAccounts, loading, error, refetch, create, update, deactivate, reactivate } = useAccounts();
+  const { 
+    accounts, 
+    archivedAccounts, 
+    loading, 
+    error, 
+    refetch, 
+    create, 
+    update, 
+    deactivate, 
+    reactivate 
+  } = useAccounts();
 
   // current_balance is denormalized and recalculated server-side by services/accounts.ts
   // whenever a transaction changes elsewhere (e.g. the Transactions tab). Refetch on focus
@@ -85,8 +95,33 @@ export default function AccountsScreen() {
           <ActivityIndicator color={theme.tint} />
         </View>
       ) : (
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+        <View style={{ flex: 1 }}>
+        <Text style={styles.listContentTitle}>
+          Bank Accounts
+        </Text>
         <FlatList
-          data={accounts}
+          data={accounts.filter((a) => a.type !== 'credit_card')}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => (
+            <AccountCard
+              account={item}
+              onPress={() => openEditModal(item)}
+              onDeactivate={() => handleDeactivate(item)}
+            />
+          )}
+          ListEmptyComponent={
+            <Text style={[styles.empty, { color: theme.icon }]}>No accounts yet. Tap + to add one.</Text>
+          }
+        />
+        </View>
+        <View style={{ flex: 1 }}>
+        <Text style={styles.listContentTitle}>
+          Credit Cards
+        </Text>
+        <FlatList
+          data={accounts.filter((a) => a.type === 'credit_card')}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
@@ -121,6 +156,8 @@ export default function AccountsScreen() {
             ) : null
           }
         />
+        </View>
+        </View>
       )}
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -146,6 +183,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: 'bold', paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContent: { paddingHorizontal: 24, paddingBottom: 96 },
+  listContentTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 16, marginBottom: 8, paddingLeft: 24 },
   empty: { textAlign: 'center', marginTop: 32 },
   archivedSection: { marginTop: 16, gap: 12 },
   errorText: { color: '#ef4444', fontSize: 14, textAlign: 'center', paddingHorizontal: 24 },
