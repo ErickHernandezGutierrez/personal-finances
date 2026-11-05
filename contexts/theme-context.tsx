@@ -1,17 +1,7 @@
-import { Colors } from '@/constants/theme';
+import { THEMES } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { type ThemeColor } from '@/types/theme';
 import React, { createContext, useContext, useState } from 'react';
-
-type ThemeColor = {
-    name: string;
-    text: string;
-    background: string;
-    border: string;
-    tint: string;
-    icon: string;
-    tabIconDefault: string;
-    tabIconSelected: string;
-};
 
 type ThemeState = {
     theme: ThemeColor;
@@ -22,12 +12,12 @@ const ThemeContext = createContext<ThemeState | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const colorScheme = useColorScheme() ?? 'light';
-    const [theme, setTheme] = useState<ThemeColor>(Colors[colorScheme]);
+    const [theme, setTheme] = useState<ThemeColor>(THEMES['dark']);
 
     const toggleTheme = () => {
         setTheme(prevTheme => prevTheme.name === 'light'
-            ? Colors['dark']
-            : Colors['light']
+            ? THEMES['dark']
+            : THEMES['light']
         );
     };
 

@@ -3,33 +3,94 @@
  * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
  */
 
+import { type ThemeColors } from '@/types/theme';
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
+const tintColorLight = '#2771D8';
 const tintColorDark = '#fff';
 
-export const Colors = {
+export const THEMES = {
   light: {
     name: 'light',
+    primary: '#2771D8',
     text: '#11181C',
     background: '#F8F8FF',
+    secondaryBackground: '#1F2431',
+    tertiaryBackground: '#212E36',
+    hovered: '#D9F9FB',
     border: '#E6E8EB',
     tint: tintColorLight,
     icon: '#687076',
+    button: {
+      primary: {
+        background: '#2771D8',
+        backgroundHovered: '#D9F9FB',
+        text: '#FFFFFF',
+        textHovered: '#14192E',
+        border: 'transparent',
+      },
+      secondary: {
+        background: 'transparent',
+        backgroundHovered: '#D9F9FB',
+        text: '#FFFFFF',
+        textHovered: '#14192E',
+        border: '#2A2828',
+      },
+      tertiary: {
+        background: 'transparent',
+        backgroundHovered: '#D9F9FB',
+        text: '#FFFFFF',
+        textHovered: '#14192E',
+        border: 'transparent',
+      },
+    },
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
+    balancePositive: '#00804C',
+    balanceNegative: '#BC2D29',
+    balanceNeutral: '#9BA1A6',
   },
   dark: {
     name: 'dark',
-    text: '#ECEDEE',
-    background: '#151718',
+    primary: '#2771D8',
+    text: '#FFFFFF',
+    background: '#000000',
+    secondaryBackground: '#1F2431',
+    tertiaryBackground: '#212E36',
+    hovered: '#D9F9FB',
     border: '#2D2D2D',
     tint: tintColorDark,
     icon: '#9BA1A6',
+    button: {
+      primary: {
+        background: '#2771D8',
+        backgroundHovered: '#D9F9FB',
+        text: '#FFFFFF',
+        textHovered: '#14192E',
+        border: 'transparent',
+      },
+      secondary: {
+        background: 'transparent',
+        backgroundHovered: '#D9F9FB',
+        text: '#2771D8',
+        textHovered: '#14192E',
+        border: '#2771D8', //'#2A2828',
+      },
+      tertiary: {
+        background: 'transparent',
+        backgroundHovered: '#D9F9FB',
+        text: '#FFFFFF',
+        textHovered: '#14192E',
+        border: 'transparent',
+      },
+    },
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
+    balancePositive: '#00804C',
+    balanceNegative: '#BC2D29',
+    balanceNeutral: '#9BA1A6',
   },
-};
+} satisfies Record<ThemeColors['name'], ThemeColors>;
 
 export const Fonts = Platform.select({
   ios: {
