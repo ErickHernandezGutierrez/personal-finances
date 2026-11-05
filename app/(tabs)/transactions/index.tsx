@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ConfirmModal } from '@/components/confirm-modal';
 import FloatingButton from '@/components/floating-button';
+import { SearchField } from '@/components/forms/search-field';
 import { SelectField, type SelectOption } from '@/components/forms/select-field';
 import { AppModal } from '@/components/modal';
 import { MoneyExchangeCard } from '@/components/money-exchanges/money-exchange-card';
@@ -49,26 +50,23 @@ export default function TransactionsScreen() {
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [accountFilter, setAccountFilter] = useState(ALL_ACCOUNTS);
   const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES);
+  const [search, setSearch] = useState('');
 
   const { from, to } = useMemo(() => monthRange(year, month), [year, month]);
-  const filters = useMemo<TransactionFilters>(
-    () => ({
-      from,
-      to,
-      accountId: accountFilter !== ALL_ACCOUNTS ? accountFilter : undefined,
-      categoryId: categoryFilter !== ALL_CATEGORIES ? categoryFilter : undefined,
-    }),
-    [from, to, accountFilter, categoryFilter],
-  );
+
+  const filters = useMemo<TransactionFilters>(() => ({
+    from,
+    to,
+    accountId: accountFilter !== ALL_ACCOUNTS ? accountFilter : undefined,
+    categoryId: categoryFilter !== ALL_CATEGORIES ? categoryFilter : undefined,
+  }), [from, to, accountFilter, categoryFilter]);
+
   // Money exchanges have no category, so a category filter naturally excludes them from the feed.
-  const exchangeFilters = useMemo<MoneyExchangeFilters>(
-    () => ({
-      from,
-      to,
-      accountId: accountFilter !== ALL_ACCOUNTS ? accountFilter : undefined,
-    }),
-    [from, to, accountFilter],
-  );
+  const exchangeFilters = useMemo<MoneyExchangeFilters>(() => ({
+    from,
+    to,
+    accountId: accountFilter !== ALL_ACCOUNTS ? accountFilter : undefined,
+  }), [from, to, accountFilter]);
 
   const {
     transactions,
@@ -79,6 +77,7 @@ export default function TransactionsScreen() {
     update: updateTransaction,
     remove: removeTransaction,
   } = useTransactions(filters);
+
   const {
     exchanges,
     loading: exchangesLoading,
@@ -88,8 +87,18 @@ export default function TransactionsScreen() {
     update: updateExchange,
     remove: removeExchange,
   } = useMoneyExchanges(exchangeFilters);
-  const { accounts, loading: accountsLoading, refetch: refetchAccounts } = useAccounts();
-  const { categories, loading: categoriesLoading, refetch: refetchCategories } = useCategories();
+
+  const { 
+    accounts, 
+    loading: accountsLoading, 
+    refetch: refetchAccounts 
+  } = useAccounts();
+
+  const { 
+    categories, 
+    loading: categoriesLoading, 
+    refetch: refetchCategories 
+  } = useCategories();
 
   // Accounts/categories may have changed on another tab (e.g. an account created or
   // renamed), and this screen's own data may be stale after switching away and back.
@@ -122,6 +131,24 @@ export default function TransactionsScreen() {
         : [];
     return [...txItems, ...exItems].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   }, [transactions, exchanges, categoryFilter]);
+
+  const visibleFeed = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return feed;
+    return feed.filter((item) => {
+      if (item.kind === 'transaction') {
+        return (
+          item.data.description.toLowerCase().includes(query) ||
+          String(item.data.amount).includes(query)
+        );
+      }
+      return (
+        (item.data.description ?? '').toLowerCase().includes(query) ||
+        String(item.data.amount_sent).includes(query) ||
+        String(item.data.amount_received).includes(query)
+      );
+    });
+  }, [feed, search]);
 
   const accountOptions = useMemo<SelectOption[]>(
     () => [{ label: 'All accounts', value: ALL_ACCOUNTS }, ...accounts.map((a) => ({ label: a.name, value: a.id }))],
@@ -230,6 +257,7 @@ export default function TransactionsScreen() {
 
       <View style={styles.filters}>
         <MonthNav year={year} month={month} onChange={(y, m) => { setYear(y); setMonth(m); }} />
+        <SearchField value={search} onChange={setSearch} placeholder="Search by description or amount" />
         <View style={styles.filterRow}>
           <SelectField label="Account" value={accountFilter} options={accountOptions} onChange={setAccountFilter} />
           <SelectField label="Category" value={categoryFilter} options={categoryOptions} onChange={setCategoryFilter} />
@@ -240,41 +268,40 @@ export default function TransactionsScreen() {
         <ActivityIndicator color={theme.tint} style={styles.centered} />
       ) : (
         <FlatList
-          data={feed}
+          data={visibleFeed}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) =>
-            item.kind === 'transaction' ? (
-              <TransactionCard
-                transaction={item.data}
-                account={accountsById.get(item.data.account_id)}
-                toAccount={item.data.to_account_id ? accountsById.get(item.data.to_account_id) : undefined}
-                category={item.data.category_id ? categoriesById.get(item.data.category_id) : undefined}
-                togglingPaid={togglingId === item.data.id}
-                onPress={() => openEditModal(item)}
-                onDelete={() => handleDelete(item)}
-                onTogglePaid={(isPaid) => handleTogglePaid(item.data, isPaid)}
-              />
-            ) : (
-              <MoneyExchangeCard
-                exchange={item.data}
-                fromAccount={accountsById.get(item.data.from_account_id)}
-                toAccount={accountsById.get(item.data.to_account_id)}
-                togglingId={togglingId === item.data.id}
-                onPress={() => openEditModal(item)}
-                onDelete={() => handleDelete(item)}
-                onToggleSent={(isSent) => handleToggleExchange(item.data, { is_sent: isSent })}
-                onToggleReceived={(isReceived) => handleToggleExchange(item.data, { is_received: isReceived })}
-              />
-            )
-          }
+          renderItem={({ item }) => item.kind === 'transaction' ? (
+            <TransactionCard
+              transaction={item.data}
+              togglingPaid={togglingId === item.data.id}
+              onPress={() => openEditModal(item)}
+              onDelete={() => handleDelete(item)}
+              onTogglePaid={(isPaid) => handleTogglePaid(item.data, isPaid)}
+            />
+          ) : (
+            <MoneyExchangeCard
+              exchange={item.data}
+              fromAccount={accountsById.get(item.data.from_account_id)}
+              toAccount={accountsById.get(item.data.to_account_id)}
+              togglingId={togglingId === item.data.id}
+              onPress={() => openEditModal(item)}
+              onDelete={() => handleDelete(item)}
+              onToggleSent={(isSent) => handleToggleExchange(item.data, { is_sent: isSent })}
+              onToggleReceived={(isReceived) => handleToggleExchange(item.data, { is_received: isReceived })}
+            />
+          )}
           ListEmptyComponent={
-            <Text style={[styles.empty, { color: theme.icon }]}>No transactions this month.</Text>
+            <Text style={[styles.empty, { color: theme.icon }]}>
+              {search.trim() ? 'No transactions match your search.' : 'No transactions this month.'}
+            </Text>
           }
         />
       )}
 
-      {listError || toggleError ? <Text style={styles.errorText}>{listError ?? toggleError}</Text> : null}
+      {listError || toggleError ? (
+        <Text style={styles.errorText}>{listError ?? toggleError}</Text>
+      ) : null}
 
       <FloatingButton onPress={openCreateModal} />
 
@@ -329,7 +356,7 @@ const styles = StyleSheet.create({
   filters: { paddingHorizontal: 24, paddingBottom: 12, gap: 12 },
   filterRow: { flexDirection: 'row', gap: 12 },
   centered: { flex: 1 },
-  listContent: { paddingHorizontal: 24, paddingBottom: 96 },
+  listContent: { paddingHorizontal: 24, paddingBottom: 96, gap: 12 },
   empty: { textAlign: 'center', marginTop: 32 },
   errorText: { color: '#ef4444', fontSize: 14, textAlign: 'center', paddingHorizontal: 24 },
 });

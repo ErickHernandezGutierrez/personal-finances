@@ -1,11 +1,12 @@
-import { useState } from 'react'
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
+import { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { ChipSelect } from '@/components/forms/chip-select'
-import { InputField } from '@/components/forms/input-field'
-import { MoneyExchangeForm, type MoneyExchangeFormSubmitPayload } from '@/components/money-exchanges/money-exchange-form'
-import { useTheme } from '@/contexts/theme-context'
-import type { Account, Category, Transaction, TransactionInsert, TransactionType, TransactionUpdate } from '@/types/app'
+import { ChipSelect } from '@/components/forms/chip-select';
+import { InputField } from '@/components/forms/input-field';
+import { MoneyExchangeForm, type MoneyExchangeFormSubmitPayload } from '@/components/money-exchanges/money-exchange-form';
+import { Button } from '@/components/ui/button';
+import { useTheme } from '@/contexts/theme-context';
+import type { Account, Category, Transaction, TransactionInsert, TransactionType, TransactionUpdate } from '@/types/app';
 
 // Money exchanges live in a separate table (money_exchanges) with a different
 // shape, but they're offered as a "type" here so creation has one entry point.
@@ -256,22 +257,21 @@ export function TransactionForm({
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <View style={styles.actions}>
-            <Pressable
-              style={[styles.button, styles.cancelButton, { borderColor: theme.border }]}
+            <Button 
+              variant="tertiary"
+              size="medium"
+              title="Cancel"
               onPress={onCancel}
-              disabled={submitting}>
-              <Text style={{ color: theme.text }}>Cancel</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.button, { backgroundColor: theme.tint }, submitting && styles.buttonDisabled]}
+              disabled={submitting}
+            />
+            <Button 
+              variant="primary"
+              size="medium"
+              title={mode === 'create' ? 'Create' : 'Save'}
               onPress={handleSubmit}
-              disabled={submitting || accountOptions.length === 0}>
-              {submitting ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>{mode === 'create' ? 'Create' : 'Save'}</Text>
-              )}
-            </Pressable>
+              disabled={submitting || accountOptions.length === 0}
+              loading={submitting}
+            />
           </View>
         </>
       )}
@@ -282,7 +282,7 @@ export function TransactionForm({
 const styles = StyleSheet.create({
   form: { gap: 16 },
   errorText: { color: '#ef4444', fontSize: 14, textAlign: 'center' },
-  actions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  actions: { flexDirection: 'row', gap: 12, marginTop: 8, alignSelf: 'flex-end' },
   button: { flex: 1, borderRadius: 8, paddingVertical: 14, alignItems: 'center' },
   cancelButton: { borderWidth: 1 },
   buttonDisabled: { opacity: 0.6 },
