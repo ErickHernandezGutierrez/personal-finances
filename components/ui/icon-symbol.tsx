@@ -29,6 +29,7 @@ const MAPPING = {
   'pencil': 'edit',
   'arrow.counterclockwise': 'restore',
   'magnifyingglass': 'search',
+  'calendar': 'calendar-today',
 } as IconMapping;
 
 /**

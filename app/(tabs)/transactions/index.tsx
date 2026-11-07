@@ -10,7 +10,7 @@ import { SelectField, type SelectOption } from '@/components/forms/select-field'
 import { AppModal } from '@/components/modal';
 import { MoneyExchangeCard } from '@/components/money-exchanges/money-exchange-card';
 import { MoneyExchangeForm, type MoneyExchangeFormSubmitPayload } from '@/components/money-exchanges/money-exchange-form';
-import { MonthNav } from '@/components/transactions/month-nav';
+import { DateRangeFilter } from '@/components/transactions/date-range-filter';
 import { TransactionCard } from '@/components/transactions/transaction-card';
 import { TransactionForm, type TransactionFormSubmitPayload } from '@/components/transactions/transaction-form';
 import { useTheme } from '@/contexts/theme-context';
@@ -18,6 +18,7 @@ import { useAccounts } from '@/hooks/use-accounts';
 import { useCategories } from '@/hooks/use-categories';
 import { useMoneyExchanges } from '@/hooks/use-money-exchanges';
 import { useTransactions } from '@/hooks/use-transactions';
+import { presetRange, type DateRange } from '@/lib/date-range';
 import type { MoneyExchangeFilters } from '@/services/money-exchanges';
 import type { TransactionFilters } from '@/services/transactions';
 import type { MoneyExchange, Transaction } from '@/types/app';
@@ -34,39 +35,28 @@ type EditingItem =
   | { kind: 'money_exchange'; data: MoneyExchange }
   | null;
 
-function monthRange(year: number, month: number) {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const lastDay = new Date(year, month, 0).getDate();
-  return {
-    from: `${year}-${pad(month)}-01`,
-    to: `${year}-${pad(month)}-${pad(lastDay)}`,
-  };
-}
-
 export default function TransactionsScreen() {
   const { theme } = useTheme();
-  const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth() + 1);
+  const [dateRange, setDateRange] = useState<DateRange>(() => presetRange('this_month'));
   const [accountFilter, setAccountFilter] = useState(ALL_ACCOUNTS);
   const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES);
   const [search, setSearch] = useState('');
 
-  const { from, to } = useMemo(() => monthRange(year, month), [year, month]);
+  const { fromDate, toDate } = dateRange;
 
-  const filters = useMemo<TransactionFilters>(() => ({
-    from,
-    to,
+  const filters = useMemo<TransactionFilters>(() : TransactionFilters => ({
+    from: fromDate,
+    to: toDate,
     accountId: accountFilter !== ALL_ACCOUNTS ? accountFilter : undefined,
     categoryId: categoryFilter !== ALL_CATEGORIES ? categoryFilter : undefined,
-  }), [from, to, accountFilter, categoryFilter]);
+  }), [fromDate, toDate, accountFilter, categoryFilter]);
 
   // Money exchanges have no category, so a category filter naturally excludes them from the feed.
-  const exchangeFilters = useMemo<MoneyExchangeFilters>(() => ({
-    from,
-    to,
+  const exchangeFilters = useMemo<MoneyExchangeFilters>(() : MoneyExchangeFilters => ({
+    from: fromDate,
+    to: toDate,
     accountId: accountFilter !== ALL_ACCOUNTS ? accountFilter : undefined,
-  }), [from, to, accountFilter]);
+  }), [fromDate, toDate, accountFilter]);
 
   const {
     transactions,
@@ -256,12 +246,12 @@ export default function TransactionsScreen() {
       <Text style={[styles.title, { color: theme.text }]}>Transactions</Text>
 
       <View style={styles.filters}>
-        <MonthNav year={year} month={month} onChange={(y, m) => { setYear(y); setMonth(m); }} />
         <SearchField value={search} onChange={setSearch} placeholder="Search by description or amount" />
         <View style={styles.filterRow}>
           <SelectField label="Account" value={accountFilter} options={accountOptions} onChange={setAccountFilter} />
           <SelectField label="Category" value={categoryFilter} options={categoryOptions} onChange={setCategoryFilter} />
         </View>
+        <DateRangeFilter from={fromDate} to={toDate} onChange={setDateRange} />
       </View>
 
       {isLoading ? (
@@ -293,7 +283,7 @@ export default function TransactionsScreen() {
           )}
           ListEmptyComponent={
             <Text style={[styles.empty, { color: theme.icon }]}>
-              {search.trim() ? 'No transactions match your search.' : 'No transactions this month.'}
+              {search.trim() ? 'No transactions match your search.' : 'No transactions in this date range.'}
             </Text>
           }
         />
