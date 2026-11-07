@@ -343,7 +343,7 @@ export default function TransactionsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   title: { fontSize: 28, fontWeight: 'bold', paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 },
-  filters: { paddingHorizontal: 24, paddingBottom: 12, gap: 12 },
+  filters: { flexDirection: 'row', paddingHorizontal: 24, paddingBottom: 12, gap: 12 },
   filterRow: { flexDirection: 'row', gap: 12 },
   centered: { flex: 1 },
   listContent: { paddingHorizontal: 24, paddingBottom: 96, gap: 12 },

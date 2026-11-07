@@ -13,7 +13,7 @@ export function SearchField({ value, onChange, placeholder = 'Search' }: SearchF
   const { theme } = useTheme()
 
   return (
-    <View style={[styles.container, { borderColor: theme.border }]}>
+    <View style={[styles.container, { backgroundColor: '#2A2828', borderColor: theme.border }]}>
       <IconSymbol name="magnifyingglass" size={18} color={theme.icon} />
       <TextInput
         style={[styles.input, { color: theme.text }]}
@@ -36,12 +36,13 @@ export function SearchField({ value, onChange, placeholder = 'Search' }: SearchF
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: 999,
+    paddingHorizontal: 16,
     paddingVertical: 8,
   },
   input: { flex: 1, fontSize: 16, padding: 0 },

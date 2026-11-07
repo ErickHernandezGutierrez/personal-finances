@@ -1,7 +1,7 @@
-import 'react-native-url-polyfill/auto'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import 'react-native-reanimated'
+import 'react-native-url-polyfill/auto'
 
 import { AuthProvider } from '@/contexts/auth-context'
 import { ThemeProvider } from '@/contexts/theme-context'
