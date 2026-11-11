@@ -15,6 +15,7 @@ export type ThemeColors = {
     background: string;
     secondaryBackground: string;
     tertiaryBackground: string;
+    fieldBackground: string;
     hovered: string;
     border: string;
     tint: string;

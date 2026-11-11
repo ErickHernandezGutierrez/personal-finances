@@ -21,7 +21,7 @@ export function SelectField({ label, value, options, onChange }: SelectFieldProp
 
   return (
     <>
-      <Pressable style={[styles.trigger, { borderColor: theme.border }]} onPress={() => setVisible(true)}>
+      <Pressable style={[styles.trigger, { backgroundColor: theme.fieldBackground, borderColor: theme.border }]} onPress={() => setVisible(true)}>
         <View style={styles.triggerText}>
           <Text style={[styles.label, { color: theme.icon }]}>{label}</Text>
           <Text style={{ color: theme.text }} numberOfLines={1}>
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },

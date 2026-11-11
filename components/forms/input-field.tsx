@@ -18,8 +18,8 @@ export function InputField({ label, error, style, ...props }: Props) {
           styles.input,
           {
             color: theme.text,
-            borderColor: error ? '#ef4444' : theme.icon,
-            backgroundColor: theme.background,
+            borderColor: error ? '#ef4444' : theme.border,
+            backgroundColor: theme.fieldBackground,
           },
           style,
         ]}
@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: '500' },
   input: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,

@@ -13,7 +13,7 @@ export function SearchField({ value, onChange, placeholder = 'Search' }: SearchF
   const { theme } = useTheme()
 
   return (
-    <View style={[styles.container, { backgroundColor: '#2A2828', borderColor: theme.border }]}>
+    <View style={[styles.container, { backgroundColor: theme.fieldBackground, borderColor: theme.border }]}>
       <IconSymbol name="magnifyingglass" size={18} color={theme.icon} />
       <TextInput
         style={[styles.input, { color: theme.text }]}

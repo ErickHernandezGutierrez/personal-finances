@@ -61,7 +61,7 @@ export function DateRangeFilter({ from, to, onChange }: DateRangeFilterProps) {
 
   return (
     <>
-      <Pressable style={[styles.trigger, { borderColor: theme.border }]} onPress={open}>
+      <Pressable style={[styles.trigger, { backgroundColor: theme.fieldBackground, borderColor: theme.border }]} onPress={open}>
         <IconSymbol name="calendar" size={18} color={theme.icon} />
         <View style={styles.triggerText}>
           <Text style={[styles.triggerLabel, { color: theme.icon }]}>Date range</Text>
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },

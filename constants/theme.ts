@@ -17,6 +17,7 @@ export const THEMES = {
     background: '#F8F8FF',
     secondaryBackground: '#1F2431',
     tertiaryBackground: '#212E36',
+    fieldBackground: '#F8F8FF',
     hovered: '#D9F9FB',
     border: '#E6E8EB',
     tint: tintColorLight,
@@ -57,8 +58,9 @@ export const THEMES = {
     background: '#000000',
     secondaryBackground: '#1F2431',
     tertiaryBackground: '#212E36',
+    fieldBackground: '#2A2828',
     hovered: '#D9F9FB',
-    border: '#2D2D2D',
+    border: '#464444',
     tint: tintColorDark,
     icon: '#9BA1A6',
     button: {
@@ -74,7 +76,7 @@ export const THEMES = {
         backgroundHovered: '#D9F9FB',
         text: '#2771D8',
         textHovered: '#14192E',
-        border: '#2771D8', //'#2A2828',
+        border: '#2771D8',
       },
       tertiary: {
         background: 'transparent',
