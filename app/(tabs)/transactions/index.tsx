@@ -264,6 +264,7 @@ export default function TransactionsScreen() {
           renderItem={({ item }) => item.kind === 'transaction' ? (
             <TransactionCard
               transaction={item.data}
+              category={categories.find((c) => c.id === item.data.category_id)}
               togglingPaid={togglingId === item.data.id}
               onPress={() => openEditModal(item)}
               onDelete={() => handleDelete(item)}
