@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { IconButton } from '@/components/ui/icon-button';
@@ -57,12 +57,6 @@ export function TransactionCard({
           {sign}
           {formatCurrency(transaction.amount, transaction.currency)}
         </Text>
-        <Switch
-          value={transaction.is_paid}
-          onValueChange={onTogglePaid}
-          disabled={togglingPaid}
-          trackColor={{ true: theme.primary, false: theme.tertiaryBackground }}
-        />
         <IconButton name='trash' onPress={onDelete} />
       </Pressable>
     </Card>

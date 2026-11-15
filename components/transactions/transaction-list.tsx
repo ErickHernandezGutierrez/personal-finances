@@ -7,6 +7,7 @@ import FloatingButton from '@/components/floating-button';
 import { TransactionCard } from '@/components/transactions/transaction-card';
 import type { TransactionFormSubmitPayload } from '@/components/transactions/transaction-form';
 import { EmptyTransactionList } from '@/components/transactions/transaction-list-empty';
+import { TransactionListHeader } from '@/components/transactions/transaction-list-header';
 import { TransactionModal } from '@/components/transactions/transaction-modal';
 import { useTheme } from '@/contexts/theme-context';
 import { useTransactions } from '@/hooks/use-transactions';
@@ -88,6 +89,8 @@ export function TransactionList({ filters, accounts, categories, search }: Trans
 
   return (
     <>
+      <TransactionListHeader />
+      
       {loading ? (
         <ActivityIndicator color={theme.primary} style={styles.loading} />
       ) : (
@@ -95,6 +98,7 @@ export function TransactionList({ filters, accounts, categories, search }: Trans
           data={visibleTransactions}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <TransactionCard
               transaction={item}
