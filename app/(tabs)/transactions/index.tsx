@@ -1,144 +1,58 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ConfirmModal } from '@/components/confirm-modal';
-import FloatingButton from '@/components/floating-button';
 import { SearchField } from '@/components/forms/search-field';
 import { SelectField, type SelectOption } from '@/components/forms/select-field';
-import { AppModal } from '@/components/modal';
-import { MoneyExchangeCard } from '@/components/money-exchanges/money-exchange-card';
-import { MoneyExchangeForm, type MoneyExchangeFormSubmitPayload } from '@/components/money-exchanges/money-exchange-form';
+import { MoneyExchangeList } from '@/components/money-exchanges/money-exchange-list';
 import { DateRangeFilter } from '@/components/transactions/date-range-filter';
-import { TransactionCard } from '@/components/transactions/transaction-card';
-import { TransactionForm, type TransactionFormSubmitPayload } from '@/components/transactions/transaction-form';
+import { ListTabs, type ListTab } from '@/components/transactions/list-tabs';
+import { TransactionList } from '@/components/transactions/transaction-list';
 import { useTheme } from '@/contexts/theme-context';
 import { useAccounts } from '@/hooks/use-accounts';
 import { useCategories } from '@/hooks/use-categories';
-import { useMoneyExchanges } from '@/hooks/use-money-exchanges';
-import { useTransactions } from '@/hooks/use-transactions';
 import { presetRange, type DateRange } from '@/lib/date-range';
 import type { MoneyExchangeFilters } from '@/services/money-exchanges';
 import type { TransactionFilters } from '@/services/transactions';
-import type { MoneyExchange, Transaction } from '@/types/app';
 
 const ALL_ACCOUNTS = '__all_accounts__';
 const ALL_CATEGORIES = '__all_categories__';
 
-type FeedItem =
-  | { kind: 'transaction'; id: string; date: string; data: Transaction }
-  | { kind: 'money_exchange'; id: string; date: string; data: MoneyExchange };
-
-type EditingItem =
-  | { kind: 'transaction'; data: Transaction }
-  | { kind: 'money_exchange'; data: MoneyExchange }
-  | null;
-
 export default function TransactionsScreen() {
   const { theme } = useTheme();
+  const [tab, setTab] = useState<ListTab>('transactions');
   const [dateRange, setDateRange] = useState<DateRange>(() => presetRange('this_month'));
   const [accountFilter, setAccountFilter] = useState(ALL_ACCOUNTS);
   const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES);
   const [search, setSearch] = useState('');
 
   const { fromDate, toDate } = dateRange;
+  const accountId = accountFilter !== ALL_ACCOUNTS ? accountFilter : undefined;
 
-  const filters = useMemo<TransactionFilters>(() : TransactionFilters => ({
+  const transactionFilters = useMemo<TransactionFilters>(() => ({
     from: fromDate,
     to: toDate,
-    accountId: accountFilter !== ALL_ACCOUNTS ? accountFilter : undefined,
+    accountId,
     categoryId: categoryFilter !== ALL_CATEGORIES ? categoryFilter : undefined,
-  }), [fromDate, toDate, accountFilter, categoryFilter]);
+  }), [fromDate, toDate, accountId, categoryFilter]);
 
-  // Money exchanges have no category, so a category filter naturally excludes them from the feed.
-  const exchangeFilters = useMemo<MoneyExchangeFilters>(() : MoneyExchangeFilters => ({
+  const exchangeFilters = useMemo<MoneyExchangeFilters>(() => ({
     from: fromDate,
     to: toDate,
-    accountId: accountFilter !== ALL_ACCOUNTS ? accountFilter : undefined,
-  }), [fromDate, toDate, accountFilter]);
+    accountId,
+  }), [fromDate, toDate, accountId]);
 
-  const {
-    transactions,
-    loading: transactionsLoading,
-    error: transactionsError,
-    refetch: refetchTransactions,
-    create: createTransaction,
-    update: updateTransaction,
-    remove: removeTransaction,
-  } = useTransactions(filters);
+  const { accounts, loading: accountsLoading, refetch: refetchAccounts } = useAccounts();
+  const { categories, loading: categoriesLoading, refetch: refetchCategories } = useCategories();
 
-  const {
-    exchanges,
-    loading: exchangesLoading,
-    error: exchangesError,
-    refetch: refetchExchanges,
-    create: createExchange,
-    update: updateExchange,
-    remove: removeExchange,
-  } = useMoneyExchanges(exchangeFilters);
-
-  const { 
-    accounts, 
-    loading: accountsLoading, 
-    refetch: refetchAccounts 
-  } = useAccounts();
-
-  const { 
-    categories, 
-    loading: categoriesLoading, 
-    refetch: refetchCategories 
-  } = useCategories();
-
-  // Accounts/categories may have changed on another tab (e.g. an account created or
-  // renamed), and this screen's own data may be stale after switching away and back.
+  // Accounts/categories may have changed on another tab (e.g. an account created or renamed).
   useFocusEffect(
     useCallback(() => {
-      refetchTransactions();
-      refetchExchanges();
       refetchAccounts();
       refetchCategories();
-    }, [refetchTransactions, refetchExchanges, refetchAccounts, refetchCategories]),
+    }, [refetchAccounts, refetchCategories]),
   );
-
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingItem, setEditingItem] = useState<EditingItem>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [deletingItem, setDeletingItem] = useState<EditingItem>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [toggleError, setToggleError] = useState<string | null>(null);
-
-  const accountsById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
-  const categoriesById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-
-  const feed = useMemo<FeedItem[]>(() => {
-    const txItems: FeedItem[] = transactions.map((t) => ({ kind: 'transaction', id: t.id, date: t.date, data: t }));
-    const exItems: FeedItem[] =
-      categoryFilter === ALL_CATEGORIES
-        ? exchanges.map((e) => ({ kind: 'money_exchange', id: e.id, date: e.date_sent, data: e }))
-        : [];
-    return [...txItems, ...exItems].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-  }, [transactions, exchanges, categoryFilter]);
-
-  const visibleFeed = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return feed;
-    return feed.filter((item) => {
-      if (item.kind === 'transaction') {
-        return (
-          item.data.description.toLowerCase().includes(query) ||
-          String(item.data.amount).includes(query)
-        );
-      }
-      return (
-        (item.data.description ?? '').toLowerCase().includes(query) ||
-        String(item.data.amount_sent).includes(query) ||
-        String(item.data.amount_received).includes(query)
-      );
-    });
-  }, [feed, search]);
 
   const accountOptions = useMemo<SelectOption[]>(
     () => [{ label: 'All accounts', value: ALL_ACCOUNTS }, ...accounts.map((a) => ({ label: a.name, value: a.id }))],
@@ -152,191 +66,33 @@ export default function TransactionsScreen() {
     [categories],
   );
 
-  function openCreateModal() {
-    setEditingItem(null);
-    setFormError(null);
-    setModalVisible(true);
-  }
-
-  function openEditModal(item: FeedItem) {
-    setEditingItem(item.kind === 'transaction' ? { kind: 'transaction', data: item.data } : { kind: 'money_exchange', data: item.data });
-    setFormError(null);
-    setModalVisible(true);
-  }
-
-  function closeModal() {
-    setModalVisible(false);
-    setEditingItem(null);
-    setFormError(null);
-  }
-
-  async function handleSubmit(payload: TransactionFormSubmitPayload | MoneyExchangeFormSubmitPayload) {
-    setSubmitting(true);
-    setFormError(null);
-    try {
-      if (payload.kind === 'transaction') {
-        if (payload.mode === 'edit' && editingItem?.kind === 'transaction') {
-          await updateTransaction(editingItem.data.id, payload.data);
-        } else if (payload.mode === 'create') {
-          await createTransaction(payload.data);
-        }
-      } else {
-        if (payload.mode === 'edit' && editingItem?.kind === 'money_exchange') {
-          await updateExchange(editingItem.data.id, payload.data);
-        } else if (payload.mode === 'create') {
-          await createExchange(payload.data);
-        }
-      }
-      closeModal();
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Something went wrong.');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  function handleDelete(item: FeedItem) {
-    setDeletingItem(item.kind === 'transaction' ? { kind: 'transaction', data: item.data } : { kind: 'money_exchange', data: item.data });
-  }
-
-  async function confirmDelete() {
-    if (!deletingItem) return;
-    setDeleting(true);
-    try {
-      if (deletingItem.kind === 'transaction') {
-        await removeTransaction(deletingItem.data.id);
-      } else {
-        await removeExchange(deletingItem.data.id);
-      }
-      setDeletingItem(null);
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  async function handleTogglePaid(transaction: Transaction, isPaid: boolean) {
-    setTogglingId(transaction.id);
-    setToggleError(null);
-    try {
-      await updateTransaction(transaction.id, { is_paid: isPaid });
-    } catch (err) {
-      setToggleError(err instanceof Error ? err.message : 'Failed to update transaction.');
-    } finally {
-      setTogglingId(null);
-    }
-  }
-
-  async function handleToggleExchange(exchange: MoneyExchange, patch: { is_sent?: boolean; is_received?: boolean }) {
-    setTogglingId(exchange.id);
-    setToggleError(null);
-    try {
-      await updateExchange(exchange.id, patch);
-    } catch (err) {
-      setToggleError(err instanceof Error ? err.message : 'Failed to update money exchange.');
-    } finally {
-      setTogglingId(null);
-    }
-  }
-
-  const isLoading = transactionsLoading || exchangesLoading || accountsLoading || categoriesLoading;
-  const listError = transactionsError ?? exchangesError;
+  const isTransactionsTab = tab === 'transactions';
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       <Text style={[styles.title, { color: theme.text }]}>Transactions</Text>
 
+      <ListTabs value={tab} onChange={setTab} />
+
       <View style={styles.filters}>
         <SearchField value={search} onChange={setSearch} placeholder="Search by description or amount" />
         <View style={styles.filterRow}>
           <SelectField label="Account" value={accountFilter} options={accountOptions} onChange={setAccountFilter} />
-          <SelectField label="Category" value={categoryFilter} options={categoryOptions} onChange={setCategoryFilter} />
+          {/* Money exchanges have no category, so the filter only applies to transactions. */}
+          {isTransactionsTab ? (
+            <SelectField label="Category" value={categoryFilter} options={categoryOptions} onChange={setCategoryFilter} />
+          ) : null}
         </View>
         <DateRangeFilter from={fromDate} to={toDate} onChange={setDateRange} />
       </View>
 
-      {isLoading ? (
+      {accountsLoading || categoriesLoading ? (
         <ActivityIndicator color={theme.tint} style={styles.centered} />
+      ) : isTransactionsTab ? (
+        <TransactionList filters={transactionFilters} accounts={accounts} categories={categories} search={search} />
       ) : (
-        <FlatList
-          data={visibleFeed}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => item.kind === 'transaction' ? (
-            <TransactionCard
-              transaction={item.data}
-              category={categories.find((c) => c.id === item.data.category_id)}
-              togglingPaid={togglingId === item.data.id}
-              onPress={() => openEditModal(item)}
-              onDelete={() => handleDelete(item)}
-              onTogglePaid={(isPaid) => handleTogglePaid(item.data, isPaid)}
-            />
-          ) : (
-            <MoneyExchangeCard
-              exchange={item.data}
-              fromAccount={accountsById.get(item.data.from_account_id)}
-              toAccount={accountsById.get(item.data.to_account_id)}
-              togglingId={togglingId === item.data.id}
-              onPress={() => openEditModal(item)}
-              onDelete={() => handleDelete(item)}
-              onToggleSent={(isSent) => handleToggleExchange(item.data, { is_sent: isSent })}
-              onToggleReceived={(isReceived) => handleToggleExchange(item.data, { is_received: isReceived })}
-            />
-          )}
-          ListEmptyComponent={
-            <Text style={[styles.empty, { color: theme.icon }]}>
-              {search.trim() ? 'No transactions match your search.' : 'No transactions in this date range.'}
-            </Text>
-          }
-        />
+        <MoneyExchangeList filters={exchangeFilters} accounts={accounts} search={search} />
       )}
-
-      {listError || toggleError ? (
-        <Text style={styles.errorText}>{listError ?? toggleError}</Text>
-      ) : null}
-
-      <FloatingButton onPress={openCreateModal} />
-
-      <AppModal
-        visible={modalVisible}
-        title={editingItem ? (editingItem.kind === 'transaction' ? 'Edit Transaction' : 'Edit Money Exchange') : 'New Transaction'}
-        onClose={closeModal}>
-        {editingItem?.kind === 'money_exchange' ? (
-          <MoneyExchangeForm
-            mode="edit"
-            exchange={editingItem.data}
-            accounts={accounts}
-            submitting={submitting}
-            error={formError}
-            onSubmit={handleSubmit}
-            onCancel={closeModal}
-          />
-        ) : (
-          <TransactionForm
-            mode={editingItem ? 'edit' : 'create'}
-            transaction={editingItem?.data ?? null}
-            accounts={accounts}
-            categories={categories}
-            submitting={submitting}
-            error={formError}
-            onSubmit={handleSubmit}
-            onCancel={closeModal}
-          />
-        )}
-      </AppModal>
-
-      <ConfirmModal
-        visible={!!deletingItem}
-        title={deletingItem?.kind === 'money_exchange' ? 'Delete money exchange' : 'Delete transaction'}
-        message={
-          deletingItem?.kind === 'money_exchange'
-            ? `Delete "${deletingItem.data.description || 'Money exchange'}"? This cannot be undone.`
-            : `Delete "${deletingItem?.data.description}"? This cannot be undone.`
-        }
-        confirmLabel={deleting ? 'Deleting…' : 'Delete'}
-        destructive
-        onConfirm={confirmDelete}
-        onCancel={() => setDeletingItem(null)}
-      />
     </SafeAreaView>
   );
 }
@@ -347,7 +103,4 @@ const styles = StyleSheet.create({
   filters: { flexDirection: 'row', paddingHorizontal: 24, paddingBottom: 12, gap: 12 },
   filterRow: { flexDirection: 'row', gap: 12 },
   centered: { flex: 1 },
-  listContent: { paddingHorizontal: 24, paddingBottom: 96, gap: 12 },
-  empty: { textAlign: 'center', marginTop: 32 },
-  errorText: { color: '#ef4444', fontSize: 14, textAlign: 'center', paddingHorizontal: 24 },
 });
