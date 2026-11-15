@@ -36,7 +36,7 @@ export function SearchField({ value, onChange, placeholder = 'Search' }: SearchF
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    width: 300,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,

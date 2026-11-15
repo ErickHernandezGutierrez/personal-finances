@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text } from 'react-native'
 
 import { AppModal } from '@/components/modal'
 import { IconSymbol } from '@/components/ui/icon-symbol'
@@ -22,13 +22,10 @@ export function SelectField({ label, value, options, onChange }: SelectFieldProp
   return (
     <>
       <Pressable style={[styles.trigger, { backgroundColor: theme.fieldBackground, borderColor: theme.border }]} onPress={() => setVisible(true)}>
-        <View style={styles.triggerText}>
-          <Text style={[styles.label, { color: theme.icon }]}>{label}</Text>
-          <Text style={{ color: theme.text }} numberOfLines={1}>
-            {selected?.label ?? 'Select'}
-          </Text>
-        </View>
-        <Text style={{ color: theme.icon }}>▾</Text>
+        <Text style={[styles.triggerText, { color: theme.text }]}>
+          {selected?.label ?? 'Select'}
+        </Text>
+        <IconSymbol name="chevron.down" size={18} color={theme.icon} />
       </Pressable>
 
       <AppModal visible={visible} title={label} onClose={() => setVisible(false)}>
@@ -51,7 +48,6 @@ export function SelectField({ label, value, options, onChange }: SelectFieldProp
 
 const styles = StyleSheet.create({
   trigger: {
-    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -60,8 +56,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  triggerText: { flex: 1, marginRight: 8 },
-  label: { fontSize: 11 },
+  triggerText: { 
+    fontSize: 14, 
+    fontWeight: '400', 
+    lineHeight: 16, 
+    marginRight: 8,
+  },
   option: {
     flexDirection: 'row',
     justifyContent: 'space-between',

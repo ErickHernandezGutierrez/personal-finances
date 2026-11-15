@@ -62,14 +62,10 @@ export function DateRangeFilter({ from, to, onChange }: DateRangeFilterProps) {
   return (
     <>
       <Pressable style={[styles.trigger, { backgroundColor: theme.fieldBackground, borderColor: theme.border }]} onPress={open}>
+        <Text style={[styles.triggerText, { color: theme.text }]} numberOfLines={1}>
+          {formatRangeLabel(range)}
+        </Text>
         <IconSymbol name="calendar" size={18} color={theme.icon} />
-        <View style={styles.triggerText}>
-          <Text style={[styles.triggerLabel, { color: theme.icon }]}>Date range</Text>
-          <Text style={{ color: theme.text }} numberOfLines={1}>
-            {formatRangeLabel(range)}
-          </Text>
-        </View>
-        <Text style={{ color: theme.icon }}>▾</Text>
       </Pressable>
 
       <AppModal visible={visible} title="Date range" onClose={() => setVisible(false)}>
@@ -143,8 +139,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  triggerText: { flexShrink: 1, marginRight: 4 },
-  triggerLabel: { fontSize: 11 },
+  triggerText: { 
+    fontSize: 14, 
+    fontWeight: '400', 
+    lineHeight: 16, 
+    marginRight: 8, 
+  },
   content: { gap: 16 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },
 })

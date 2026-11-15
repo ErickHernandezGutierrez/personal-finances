@@ -18,6 +18,7 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'chevron.down': 'expand-more',
   'creditcard.fill': 'credit-card',
   'list.bullet': 'format-list-bulleted',
   'ellipsis.circle.fill': 'more-horiz',
