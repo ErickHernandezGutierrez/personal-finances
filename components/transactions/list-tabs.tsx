@@ -2,11 +2,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/contexts/theme-context';
 
-export type ListTab = 'transactions' | 'money_exchanges';
+export type ListTab = 'transactions' | 'money_exchanges' | 'recurring';
 
 const TABS: { label: string; value: ListTab }[] = [
   { label: 'Transactions', value: 'transactions' },
   { label: 'Money Exchanges', value: 'money_exchanges' },
+  { label: 'Recurring', value: 'recurring' },
 ];
 
 type ListTabsProps = {

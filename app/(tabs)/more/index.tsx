@@ -8,7 +8,6 @@ type MenuRow = { label: string; href: string }
 
 const MENU: MenuRow[] = [
   { label: 'Categories', href: '/(tabs)/more/categories' },
-  { label: 'Recurring Transactions', href: '/(tabs)/more/recurring' },
   { label: 'Installment Plans', href: '/(tabs)/more/installments' },
 ]
 

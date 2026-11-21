@@ -6,6 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SearchField } from '@/components/forms/search-field';
 import { SelectField, type SelectOption } from '@/components/forms/select-field';
 import { MoneyExchangeList } from '@/components/money-exchanges/money-exchange-list';
+import {
+  RecurringTransactionList,
+  type RecurringTransactionFilters,
+} from '@/components/recurring-transactions/recurring-transaction-list';
 import { DateRangeFilter } from '@/components/transactions/date-range-filter';
 import { ListTabs, type ListTab } from '@/components/transactions/list-tabs';
 import { TransactionList } from '@/components/transactions/transaction-list';
@@ -43,6 +47,12 @@ export default function TransactionsScreen() {
     accountId,
   }), [fromDate, toDate, accountId]);
 
+  // Recurring templates have no single date, so the date range doesn't apply to them.
+  const recurringFilters = useMemo<RecurringTransactionFilters>(() => ({
+    accountId,
+    categoryId: categoryFilter !== ALL_CATEGORIES ? categoryFilter : undefined,
+  }), [accountId, categoryFilter]);
+
   const { accounts, loading: accountsLoading, refetch: refetchAccounts } = useAccounts();
   const { categories, loading: categoriesLoading, refetch: refetchCategories } = useCategories();
 
@@ -67,6 +77,8 @@ export default function TransactionsScreen() {
   );
 
   const isTransactionsTab = tab === 'transactions';
+  const isRecurringTab = tab === 'recurring';
+  const showCategoryFilter = isTransactionsTab || isRecurringTab;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -78,18 +90,25 @@ export default function TransactionsScreen() {
         <SearchField value={search} onChange={setSearch} placeholder="Search by description or amount" />
         <View style={styles.filterRow}>
           <SelectField label="Account" value={accountFilter} options={accountOptions} onChange={setAccountFilter} />
-          {/* Money exchanges have no category, so the filter only applies to transactions. */}
-          {isTransactionsTab ? (
+          {/* Money exchanges have no category, so the filter only applies to transactions and recurring. */}
+          {showCategoryFilter ? (
             <SelectField label="Category" value={categoryFilter} options={categoryOptions} onChange={setCategoryFilter} />
           ) : null}
         </View>
-        <DateRangeFilter from={fromDate} to={toDate} onChange={setDateRange} />
+        {!isRecurringTab ? <DateRangeFilter from={fromDate} to={toDate} onChange={setDateRange} /> : null}
       </View>
 
       {accountsLoading || categoriesLoading ? (
         <ActivityIndicator color={theme.tint} style={styles.centered} />
       ) : isTransactionsTab ? (
         <TransactionList filters={transactionFilters} accounts={accounts} categories={categories} search={search} />
+      ) : isRecurringTab ? (
+        <RecurringTransactionList
+          filters={recurringFilters}
+          accounts={accounts}
+          categories={categories}
+          search={search}
+        />
       ) : (
         <MoneyExchangeList filters={exchangeFilters} accounts={accounts} search={search} />
       )}
