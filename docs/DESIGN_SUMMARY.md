@@ -76,7 +76,8 @@ The central ledger — every financial event recorded by the user.
 | `account_id` | uuid FK | source account (or the sole account for income/expense) |
 | `to_account_id` | uuid FK? | destination account — transfers, credit payments, investments, withdrawals (bank account → cash account) |
 | `category_id` | uuid FK? | |
-| `recurring_id` | uuid FK? | set when generated from a `recurring_transactions` template |
+| `recurring_transaction_id` | uuid FK? | set when part of a recurring plan; SET NULL on plan delete (paid rows are kept) |
+| `occurrence_number` | int? | 1-based occurrence index within the recurring plan; unique per plan |
 | `installment_plan_id` | uuid FK? | set when part of a cuotas plan; CASCADE DELETE |
 | `installment_number` | int? | 1-based index within the plan |
 
@@ -87,7 +88,16 @@ The central ledger — every financial event recorded by the user.
 
 ### 3.4 `recurring_transactions`
 
-Templates that generate `transactions` rows on demand.
+Finite recurring plans. Like installment plans, every occurrence between `start_date` and `end_date` is created up front as a pending transaction (max 1,000 per plan).
+
+**Sync rules** (`services/recurring-transactions.ts`), keyed by `transactions.occurrence_number`:
+- Occurrence `n` is dated `start_date + (n-1) × frequency`, computed from the start (month-end clamped: Jan 31 → Feb 28 → Mar 31) by `lib/recurrence.ts`.
+- **End date reduced** → pending occurrences past the new end are deleted; paid ones stay.
+- **End date extended** → missing occurrences are created as pending.
+- **Template fields edited** (type, amount, currency, description, accounts, category) → only the changed fields are copied to pending transactions.
+- **Start date / frequency edited** → pending transactions are re-dated from their occurrence number.
+- **Plan deleted** → pending transactions are deleted, paid ones are kept and unlinked.
+- **Editing a single transaction** affects only that transaction. Paid transactions are never modified by plan changes, so no balance recalculation is needed.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -102,8 +112,7 @@ Templates that generate `transactions` rows on demand.
 | `category_id` | uuid FK? | |
 | `frequency` | text | `daily \| weekly \| biweekly \| monthly \| yearly` |
 | `start_date` | date | |
-| `end_date` | date? | null = no end |
-| `next_date` | date | updated after each `generateDueInstances()` call |
+| `end_date` | date | required; `>= start_date` |
 
 ### 3.5 `installment_plans`
 
@@ -219,7 +228,7 @@ Each service file in `services/` exports plain async functions. No classes. Erro
 | `services/categories.ts` | CRUD for categories |
 | `services/transactions.ts` | CRUD for transactions, balance trigger after mutations |
 | `services/installment-plans.ts` | Plan CRUD + auto-generate N transaction rows on create |
-| `services/recurring-transactions.ts` | Template CRUD + `generateDueInstances` |
+| `services/recurring-transactions.ts` | Plan CRUD; creates all pending occurrences on create and syncs them on update/delete |
 | `services/money-exchanges.ts` | Exchange CRUD, `fx_rate` omitted from all writes |
 
 **`getUserId()`** — shared helper exported from `lib/supabase.ts`. Reads the cached session (no network call) and returns `user.id`. All insert operations call this to set `user_id`; selects/updates rely on RLS to filter automatically.
