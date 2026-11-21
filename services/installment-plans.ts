@@ -1,15 +1,6 @@
+import { occurrenceDate } from '@/lib/recurrence'
 import { getUserId, supabase } from '@/lib/supabase'
 import type { InstallmentPlan, InstallmentPlanInsert, TransactionInsert } from '@/types/app'
-
-function addMonths(date: Date, months: number): Date {
-  const d = new Date(date)
-  d.setMonth(d.getMonth() + months)
-  return d
-}
-
-function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0]
-}
 
 export async function listInstallmentPlans(): Promise<InstallmentPlan[]> {
   const { data, error } = await supabase
@@ -42,12 +33,12 @@ export async function createInstallmentPlan(
     .single()
   if (planError) throw planError
 
-  const start = new Date(plan.start_date)
   const rows: TransactionInsert[] = Array.from({ length: plan.num_installments }, (_, i) => ({
     type: 'expense' as const,
     amount: plan.installment_amount,
     currency: plan.currency,
-    date: formatDate(addMonths(start, i)),
+    // Computed from the start date with month-end clamping (Jan 31 → Feb 28 → Mar 31).
+    date: occurrenceDate(plan.start_date, 'monthly', i + 1),
     description: `${plan.description} (${i + 1}/${plan.num_installments})`,
     is_paid: false,
     account_id: plan.account_id,
