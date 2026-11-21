@@ -88,7 +88,7 @@ The central ledger — every financial event recorded by the user.
 
 ### 3.4 `recurring_transactions`
 
-Finite recurring plans. Like installment plans, every occurrence between `start_date` and `end_date` is created up front as a pending transaction (max 1,000 per plan).
+Finite recurring plans. Like installment plans, every occurrence between `start_date` and `end_date` is created up front, but as a **pending** transaction (max 1,000 per plan).
 
 **Sync rules** (`services/recurring-transactions.ts`), keyed by `transactions.occurrence_number`:
 - Occurrence `n` is dated `start_date + (n-1) × frequency`, computed from the start (month-end clamped: Jan 31 → Feb 28 → Mar 31) by `lib/recurrence.ts`.
@@ -131,7 +131,7 @@ Finite recurring plans. Like installment plans, every occurrence between `start_
 | `category_id` | uuid FK? | |
 | `start_date` | date | date of first installment |
 
-On creation, `createInstallmentPlan()` immediately inserts `num_installments` transaction rows, each dated one month apart (`is_paid = false`). Deleting the plan cascades to all its transaction rows.
+On creation, `createInstallmentPlan()` immediately inserts `num_installments` transaction rows, dated monthly from `start_date` with month-end clamping (Jan 31 → Feb 28 → Mar 31, via `lib/recurrence.ts`), all with `is_paid = true`, then recalculates the account balance. Deleting the plan cascades to all its transaction rows and recalculates the balance again.
 
 ### 3.6 `money_exchanges`
 
@@ -208,7 +208,7 @@ UPDATE accounts SET current_balance = balance WHERE id = accountId
 | `updateMoneyExchange` | all accounts in before + after snapshot |
 | `deleteMoneyExchange` with `is_sent` or `is_received` | the affected side(s) |
 
-> **Installment plans:** transactions are created with `is_paid = false`, so no balance change occurs at plan creation. Each installment's balance impact is deferred until the user marks it paid, at which point `updateTransaction` triggers recalculation normally.
+> **Installment plans:** transactions are created with `is_paid = true`, so the full purchase amount hits the account balance at plan creation (`createInstallmentPlan` calls `recalculateBalance`). Deleting a plan also recalculates, since the cascade removes paid rows.
 
 ### 4.3 Correctness guarantees
 
