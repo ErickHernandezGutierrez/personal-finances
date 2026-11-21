@@ -1,6 +1,7 @@
 import { occurrenceDate } from '@/lib/recurrence'
 import { getUserId, supabase } from '@/lib/supabase'
 import type { InstallmentPlan, InstallmentPlanInsert, TransactionInsert } from '@/types/app'
+import { recalculateBalance } from './accounts'
 
 export async function listInstallmentPlans(): Promise<InstallmentPlan[]> {
   const { data, error } = await supabase
@@ -40,7 +41,7 @@ export async function createInstallmentPlan(
     // Computed from the start date with month-end clamping (Jan 31 → Feb 28 → Mar 31).
     date: occurrenceDate(plan.start_date, 'monthly', i + 1),
     description: `${plan.description} (${i + 1}/${plan.num_installments})`,
-    is_paid: false,
+    is_paid: true,
     account_id: plan.account_id,
     category_id: plan.category_id ?? undefined,
     installment_plan_id: plan.id,
@@ -51,11 +52,23 @@ export async function createInstallmentPlan(
   const { error: txError } = await supabase.from('transactions').insert(rows)
   if (txError) throw txError
 
+  // Installments are created as paid, so they count toward the account balance.
+  await recalculateBalance(plan.account_id)
+
   return plan
 }
 
 export async function deleteInstallmentPlan(id: string): Promise<void> {
+  const { data: plan } = await supabase
+    .from('installment_plans')
+    .select('account_id')
+    .eq('id', id)
+    .single()
+
   // FK cascade removes all linked transaction rows automatically
   const { error } = await supabase.from('installment_plans').delete().eq('id', id)
   if (error) throw error
+
+  // Cascaded rows may include paid installments, so the balance has to be recomputed.
+  if (plan) await recalculateBalance(plan.account_id)
 }
